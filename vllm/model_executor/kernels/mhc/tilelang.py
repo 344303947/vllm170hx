@@ -38,7 +38,11 @@ def _tilelang_hc_prenorm_gemm(
     assert sqrsum.shape[0] == n_splits
     assert x.shape[1] == hc_mult * hidden_size
     assert x.shape[1] % n_splits == 0
-    assert (x.shape[1] // n_splits) % n_thr == 0
+    if (x.shape[1] // n_splits) % n_thr != 0:
+        # Shape the tilelang kernels cannot tile; the prenorm GEMM output is
+        # tiny ([T, hc_mult3] + [T]), so torch is a cheap universal fallback.
+        _torch_hc_prenorm_gemm(x, fn, out, sqrsum)
+        return
     use_default_config = tile_n == 12 and n_thr == 512
     if n_splits == 1 and use_default_config and x.shape[0] >= 1024:
         hc_prenorm_gemm_block_m_tilelang(
@@ -348,7 +352,13 @@ def mhc_pre_broadcast_tilelang(
     residual_flat = residual
     num_tokens = residual.shape[0]
 
-    n_splits = compute_num_split(64, hidden_size, cdiv(num_tokens, 64))
+    from vllm.utils.deep_gemm import is_deep_gemm_supported
+
+    use_deep_gemm = is_deep_gemm_supported()
+    if use_deep_gemm:
+        n_splits = compute_num_split(64, hidden_size, cdiv(num_tokens, 64))
+    else:
+        n_splits = 1
 
     residual_out = torch.empty(
         num_tokens, hc_mult, hidden_size, dtype=torch.bfloat16, device=residual.device
@@ -369,15 +379,26 @@ def mhc_pre_broadcast_tilelang(
         n_splits, num_tokens, dtype=torch.float32, device=residual.device
     )
 
-    from vllm.utils.deep_gemm import tf32_hc_prenorm_gemm
+    if use_deep_gemm:
+        from vllm.utils.deep_gemm import tf32_hc_prenorm_gemm
 
-    tf32_hc_prenorm_gemm(
-        residual_flat,
-        fn_broadcast,
-        gemm_out_mul,
-        gemm_out_sqrsum,
-        n_splits,
-    )
+        tf32_hc_prenorm_gemm(
+            residual_flat,
+            fn_broadcast,
+            gemm_out_mul,
+            gemm_out_sqrsum,
+            n_splits,
+        )
+    else:
+        # Broadcast GEMM has K = hidden_size (hc_mult factor is 1).
+        _tilelang_hc_prenorm_gemm(
+            residual_flat,
+            fn_broadcast,
+            gemm_out_mul,
+            gemm_out_sqrsum,
+            hidden_size,
+            1,
+        )
     mhc_pre_big_fuse_broadcast_with_norm_tilelang(
         gemm_out_mul,
         gemm_out_sqrsum,
