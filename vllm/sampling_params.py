@@ -891,12 +891,10 @@ class SamplingParams(
         if speculative_config is None:
             return
 
-        # Some sampling parameters are not yet compatible with spec decoding.
-        if self.min_p > _SAMPLING_EPS or self.logit_bias:
-            raise VLLMValidationError(
-                "The min_p and logit_bias sampling parameters "
-                "are not yet supported with speculative decoding."
-            )
+        # [vllm26 patch] min_p / logit_bias are NOT enforced under speculative
+        # decoding (DSpark): silently ignore the client's min_p/logit_bias rather
+        # than raising VLLMValidationError. Inference then uses the default min_p=0.0.
+        return
 
     def _validate_diffusion(self, model_config: ModelConfig) -> None:
         if not model_config.is_diffusion:
