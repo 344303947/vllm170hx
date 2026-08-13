@@ -20,6 +20,7 @@ For events, please visit [vllm.ai/events](https://vllm.ai/events) to join us.
 ---
 
 ## About
+<img width="1329" height="765" alt="ScreenShot_2026-08-13_173621_102" src="https://github.com/user-attachments/assets/369d68bf-1ff5-49e6-9727-b01e206750f0" />
 
 vLLM is a fast and easy-to-use library for LLM inference and serving.
 
