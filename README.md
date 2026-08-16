@@ -20,6 +20,9 @@ For events, please visit [vllm.ai/events](https://vllm.ai/events) to join us.
 ---
 
 ## About
+3pp new version:
+<img width="2445" height="1302" alt="image" src="https://github.com/user-attachments/assets/d3bc1221-24b3-4244-b07a-9fae8bffbc48" />
+
 3pp KV cache 1M
 <img width="1329" height="765" alt="ScreenShot_2026-08-13_173621_102" src="https://github.com/user-attachments/assets/369d68bf-1ff5-49e6-9727-b01e206750f0" />
 4pp KV cache 7M 
