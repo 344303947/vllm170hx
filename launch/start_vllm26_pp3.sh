@@ -27,7 +27,7 @@ VLLM_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MODEL_DIR=/model/DeepSeek-V4-Flash-0731
 ROW_CHUNK=64                          # 长对话安全的上下文天花板修复值
 REPO_SERVED_PREFIX=1                   # served-model-name 是否带 "/" 前缀（DeepSeek-V4 专用）
-API_KEY='sk-gRSilwwHpck1glDE9a40A435EcB04353957444F4Ad836807'  #sk_344303
+API_KEY='sk_344303'  #sk_344303
 
 # ---- 可配置项 -----------------------------------------------------------------
 PORT=9003 #9070
@@ -90,9 +90,9 @@ case "$PP" in
     else
       die "PP=3 需要至少 3 张 GPU，当前仅检测到 $GPU_COUNT 张"
     fi
-    PARTITION="16,16,11"          # 43 层 / 3 rank 求和=43（issue#2 实测可用）
+    PARTITION="15,16,12"          # 43 层 / 3 rank 求和=43（issue#2 实测可用）
     GPU_UTIL=0.95                 # 3卡 KV 显存紧张；0.95 下默认上下文 970K
-    [ "$MAXLEN_SET" = "0" ] && MAXLEN=700000    # 3卡默认上下文 700000K 489216
+    [ "$MAXLEN_SET" = "0" ] && MAXLEN=1000000    # 3卡默认上下文 700000K 489216
     ;;
   4)
     GPU_IDS=(0 1 2 3)
